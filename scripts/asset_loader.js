@@ -11,11 +11,11 @@ function loadURL(sourceElement, targetElement) {
 
     let media;
     if (isVideo) {
-        media = document.createElement("video");
+        media = document.createElement("VIDEO");
         media.width = "320";
         media.height = "240";
     } else { //audio
-        media = document.createElement("audio");
+        media = document.createElement("AUDIO");
     }
     media.src = url;
     media.type = type;
@@ -24,6 +24,7 @@ function loadURL(sourceElement, targetElement) {
     const toReplace = document.getElementById(targetElement);
     toReplace.parentNode.replaceChild(media, toReplace);
     media.id = targetElement; //Reuse targetElement id after replacing targetElement
+    initListeners(media);
 }
 
 function inferMime(url, isVideo) {
