@@ -21,7 +21,7 @@
     <div id="audio_element"></div>
 
     <form>
-        Video URL: <input id="video_url" type="text" name="video url" value="https://1fgm8rg.oloadcdn.net/dl/l/_9WycXu1PxF85Glr/WsfbZwg8fWY/The.Room.2003.720pZOnlineMovies.com.mp4?mime=true">
+        Video URL: <input id="video_url" type="text" name="video url" value="https://redirector.googlevideo.com/videoplayback?id=6419cdb1857fb31d&itag=22&source=webdrive&requiressl=yes&ttl=transient&mm=30&mn=sn-5hne6nls&ms=nxu&mv=u&pl=24&ei=SYQPWbHEMJbQqwXQm5y4Ag&mime=video/mp4&lmt=1464043585870055&mt=1494188992&ip=185.66.141.239&ipbits=0&expire=1494203529&sparams=ip,ipbits,expire,id,itag,source,requiressl,ttl,mm,mn,ms,mv,pl,ei,mime,lmt&signature=5BF5D94EA651C3BEEA0568C3689503474D136DFF.A41F66A75BF10331EBBC7471E950A27C7C6470CB&key=ck2&app=explorer">
         <button type="button" onclick="loadURL('video_url', 'video_element')">Open</button><br>
 
         Audio URL: <input id="audio_url" type="text" name="audio url" value="https://s3-us-west-1.amazonaws.com/patreon-posts/697869452968638707.mp3">
@@ -33,7 +33,8 @@
     <button onclick="rewind(60)">Rewind</button>
     <button onclick="forward(60)">Forward</button>
     <button onclick="logDelta()">Log delta</button>
-    <button onclick="watchSync()">resync</button>
+    <button onclick="setDelta(-0.5)">Audio forward</button>
+    <button onclick="setDelta(0.5)">Audio backward</button>
 
     <footer class="site-footer">
         <span class="site-footer-owner">Developed by Jake Hilborn</span>

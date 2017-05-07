@@ -5,6 +5,7 @@ let audioElement;
 let videoElement;
 let audio_ready = false;
 let video_ready = false;
+let paused = true;
 
 function initListeners(media) {
     // media.onplay = play;
@@ -29,6 +30,7 @@ function play() {
     videoElement.play();
     audioElement.addEventListener("canplaythrough", onAudioCanPlay);
     videoElement.addEventListener("canplaythrough", onVideoCanPlay);
+    paused = false;
 }
 
 function pause() {
@@ -36,6 +38,7 @@ function pause() {
     videoElement.pause();
     audioElement.removeEventListener("canplaythrough", onAudioCanPlay);
     videoElement.removeEventListener("canplaythrough", onVideoCanPlay);
+    paused = true;
 }
 
 function rewind(time) {
@@ -79,8 +82,7 @@ function onAudioCanPlay() {
 }
 
 function watchSync() {
-    if (!audioElement.paused && !videoElement.paused &&
-            Math.abs(audioElement.currentTime - videoElement.currentTime) > Math.abs(videoDelta) + 0.25) {
+    if (paused && Math.abs(audioElement.currentTime - videoElement.currentTime) > Math.abs(videoDelta) + 0.25) {
         resync(null, videoElement.currentTime); //usually video is the one stuttering
         //TODO handle audio stutter
     }
@@ -89,7 +91,13 @@ function watchSync() {
 
 function logDelta() {
     console.log(audioElement.currentTime - videoElement.currentTime);
-    // setTimeout(logDelta(),100);
+}
+
+function setDelta(adjust) {
+    if (adjust) {
+        videoDelta += adjust;
+    }
+    resync(audioElement.currentTime - adjust, null);
 }
 
 // // 2. This code loads the IFrame Player API code asynchronously.
@@ -98,6 +106,7 @@ function logDelta() {
 // tag.src = "https://www.youtube.com/iframe_api";
 // var firstScriptTag = document.getElementsByTagName('script')[0];
 // firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+//
 //
 // // 3. This function creates an <iframe> (and YouTube video_div)
 // //    after the API code downloads.
