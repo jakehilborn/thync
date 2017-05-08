@@ -58,6 +58,7 @@ function setDelta(audioAdjust, offset) {
     } else {
         audioDelta -= audioAdjust;
     }
+    buildSharingURL();
 }
 
 function setSync(forceSync) {
@@ -116,6 +117,7 @@ function setSync(forceSync) {
         };
 
         videoElement.play(); //Sync is usually done with audio playing and video paused. Force play of both.
+        buildSharingURL();
     } else {
         synced = false;
         document.getElementById("sync_toggle").textContent = "Lock sync";
@@ -131,6 +133,15 @@ function setSync(forceSync) {
 
         videoElement.pause();
         audioElement.pause();
+    }
+}
+
+function buildSharingURL(remove = false) {
+    if (remove) {
+        document.getElementById("share_url").textContent = null;
+    } else if (videoHash && audioHash) {
+        const shareUrl = "https://jakehilborn.github.io/thync/?q=" + videoHash + audioHash + Math.round(audioDelta * 10);
+        document.getElementById("share_url").textContent = "Share this dub: " + shareUrl;
     }
 }
 

@@ -2,6 +2,8 @@
 
 const v_mp4 = "video/mp4";
 const a_mp3 = "audio/mp3";
+let audioHash;
+let videoHash;
 
 window.onload = function () { //initialization
     const query = window.location.search; //example: ?q=abcdefabcdef1004
@@ -49,6 +51,8 @@ function loadURL(sourceElement, targetElement) {
     toReplace.parentNode.replaceChild(media, toReplace);
     media.id = targetElement; //Reuse targetElement id after replacing targetElement
     initControls(media);
+
+    shortenURL(url, isVideo);
 }
 
 function inferMime(url, isVideo) {
@@ -75,4 +79,31 @@ function inferMime(url, isVideo) {
     } else if (url.includes("ogg")) {
 
     }
+}
+
+function shortenURL(url, isVideo) {
+    if (url.includes("bit.ly")) {
+        if (isVideo) {
+            videoHash = url.substring(url.length - 7);
+        } else {
+            audioHash = url.substring(url.length - 7);
+        }
+        return;
+    }
+
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function () {
+        if (request.readyState === 4 && request.status === 200) {
+            const response = JSON.parse(request.responseText);
+            if (isVideo) {
+                videoHash = response.data.hash;
+            } else {
+                audioHash = response.data.hash;
+            }
+        }
+    };
+    request.open("GET",
+            "https://api-ssl.bitly.com/v3/shorten?access_token=8bce4d63dc868bb564949ccb2966cc8c69dfe19c&longUrl=" +
+            encodeURIComponent(url));
+    request.send();
 }
