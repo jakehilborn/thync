@@ -12,14 +12,15 @@ function loadURL(sourceElement, targetElement) {
     let media;
     if (isVideo) {
         media = document.createElement("VIDEO");
-        media.width = "320";
-        media.height = "240";
+        media.width = "960";
+        media.height = "640";
     } else { //audio
         media = document.createElement("AUDIO");
     }
     media.src = url;
     media.type = type;
-    media.controls = true;
+    media.controls = "controls";
+    media.controlsList = "nodownload";
 
     const toReplace = document.getElementById(targetElement);
     toReplace.parentNode.replaceChild(media, toReplace);

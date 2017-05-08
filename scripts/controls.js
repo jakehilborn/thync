@@ -1,23 +1,14 @@
 /*jslint browser:true */
 
-let videoDelta = 0;
+let audioDelta = 0; //audio typically a few minutes ahead of movie
 let audioElement;
 let videoElement;
-let audio_ready = false;
-let video_ready = false;
-let paused = true;
 
 function initListeners(media) {
-    // media.onplay = play;
-    // media.onpause = pause;
-
     if (media.nodeName === "AUDIO") {
         audioElement = media;
     } else if (media.nodeName === "VIDEO") {
         videoElement = media;
-        videoElement.onwaiting = function () {
-            audioElement.pause();
-        };
     }
 
     if (audioElement && videoElement) {
@@ -25,79 +16,94 @@ function initListeners(media) {
     }
 }
 
-function play() {
-    audioElement.play();
-    videoElement.play();
-    audioElement.addEventListener("canplaythrough", onAudioCanPlay);
-    videoElement.addEventListener("canplaythrough", onVideoCanPlay);
-    paused = false;
-}
+function resync(toVideo) {
+    console.log("resync. ToVideo=" + toVideo);
 
-function pause() {
-    audioElement.pause();
-    videoElement.pause();
-    audioElement.removeEventListener("canplaythrough", onAudioCanPlay);
-    videoElement.removeEventListener("canplaythrough", onVideoCanPlay);
-    paused = true;
-}
-
-function rewind(time) {
-    resync(audioElement.currentTime - time, null);
-}
-
-function forward(time) {
-    resync(audioElement.currentTime + time, null);
-}
-
-function resync(audioOffset, videoOffset) {
-    videoElement.pause();
-    audioElement.pause();
-
-    audio_ready = false;
-    video_ready = false;
-
-    if (videoOffset) {
-        audioElement.currentTime = videoOffset - videoDelta;
-        videoElement.currentTime = videoOffset;
+    if (toVideo) {
+        if (audioDelta > audioElement.currentTime) { //pre-movie chat
+            //show something in UI
+        } else if (videoElement.currentTime + audioDelta > audioElement.duration) { //video longer than audio
+            setSync(false);
+        } else if (audioElement.currentTime - audioDelta > videoElement.duration) { //audio longer than video
+            setSync(false);
+        } else { //within range of both audio and video
+            audioElement.currentTime = videoElement.currentTime + audioDelta;
+        }
     } else {
-        audioElement.currentTime = audioOffset;
-        videoElement.currentTime = audioOffset + videoDelta;
-    }
-}
-
-function onVideoCanPlay() {
-    video_ready = true;
-    if (audio_ready) {
-        audioElement.play();
-        videoElement.play();
-    }
-}
-
-function onAudioCanPlay() {
-    audio_ready = true;
-    if (video_ready) {
-        audioElement.play();
-        videoElement.play();
+        videoElement.currentTime = audioElement.currentTime - audioDelta;
     }
 }
 
 function watchSync() {
-    if (paused && Math.abs(audioElement.currentTime - videoElement.currentTime) > Math.abs(videoDelta) + 0.25) {
-        resync(null, videoElement.currentTime); //usually video is the one stuttering
+    if (audioDelta && !audioElement.paused && !videoElement.paused &&
+            ((Math.abs(audioElement.currentTime - videoElement.currentTime) > Math.abs(audioDelta) + 0.25) ||
+            (Math.abs(audioElement.currentTime - videoElement.currentTime) < Math.abs(audioDelta) - 0.25))) {
+        console.log("watchSync is resyncing");
+        resync(true); //usually video is the one stuttering, resync to video
         //TODO handle audio stutter
     }
     setTimeout(watchSync, 1000); //recheck every second
 }
 
 function logDelta() {
-    console.log(audioElement.currentTime - videoElement.currentTime);
+    console.log((audioDelta - (audioElement.currentTime - videoElement.currentTime)) + " : " + (audioElement.currentTime - videoElement.currentTime));
 }
 
-function setDelta(adjust) {
-    if (adjust) {
-        videoDelta += adjust;
+function setDelta(audioAdjust) {
+    if (audioAdjust) {
+        audioDelta -= audioAdjust;
+    } else {
+        audioDelta = audioElement.currentTime - videoElement.currentTime;
     }
-    resync(audioElement.currentTime - adjust, null);
+}
+
+function setSync(sync) {
+    if (sync) {
+        audioDelta = audioElement.currentTime - videoElement.currentTime;
+        // audioElement.removeAttribute("controls");
+
+        //synchronize controls to video
+        videoElement.onpause = function () {
+            console.log("videoElement on pause");
+            audioElement.pause();
+        };
+        videoElement.onplay = function () {
+            console.log("videoElement on play");
+            audioElement.play();
+        };
+        videoElement.onseeked = function () {
+            console.log("videoElement on seeked");
+            resync(true);
+        };
+
+        //synchronize buffering between both
+        videoElement.oncanplaythrough = function () {
+            console.log("onVideoCanPlay");
+            audioElement.play();
+        };
+        audioElement.oncanplaythrough = function () {
+            console.log("onAudioCanPlay");
+            videoElement.play();
+        };
+        videoElement.onwaiting = function () {
+            console.log("videoelement onwaiting");
+            audioElement.pause();
+        };
+        audioElement.onwaiting = function () {
+            console.log("audioelement onwaiting");
+            videoElement.pause();
+        };
+    } else {
+        audioDelta = 0;
+        audioElement.setAttribute("controls", "controls");
+        videoElement.onpause = null;
+        videoElement.onplay = null;
+        videoElement.onseeked = null;
+        videoElement.oncanplaythrough = null;
+        audioElement.oncanplaythrough = null;
+        videoElement.onwaiting = null;
+        audioElement.onwaiting = null;
+    }
 }
 
 // // 2. This code loads the IFrame Player API code asynchronously.
