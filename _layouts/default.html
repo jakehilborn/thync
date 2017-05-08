@@ -21,22 +21,19 @@
     <div id="audio_element"></div>
 
     <form>
-        Video URL: <input id="video_url" type="text" name="video url" value="https://1fgm8rg.oloadcdn.net/dl/l/_9WycXu1PxF85Glr/WsfbZwg8fWY/The.Room.2003.720pZOnlineMovies.com.mp4?mime=true">
+        Video URL: <input id="video_url" type="text" value="https://redirector.googlevideo.com/videoplayback?id=6419cdb1857fb31d&itag=22&source=webdrive&requiressl=yes&ttl=transient&mm=30&mn=sn-5hne6nls&ms=nxu&mv=u&pl=24&ei=i9wPWdTvNcyTqwWc4qkI&mime=video/mp4&lmt=1464043585870055&mt=1494211653&ip=185.66.141.239&ipbits=0&expire=1494226123&sparams=ip,ipbits,expire,id,itag,source,requiressl,ttl,mm,mn,ms,mv,pl,ei,mime,lmt&signature=5CE8756A2C4F27646DFA8B92165CAE7326AFD143.33AB979466E03CD474F153C5520AEE62030D7A9A&key=ck2&app=explorer">
         <button type="button" onclick="loadURL('video_url', 'video_element')">Open</button><br>
 
-        Audio URL: <input id="audio_url" type="text" name="audio url" value="https://s3-us-west-1.amazonaws.com/patreon-posts/697869452968638707.mp3">
+        Audio URL: <input id="audio_url" type="text" value="https://s3-us-west-1.amazonaws.com/patreon-posts/697869452968638707.mp3">
         <button type="button" onclick="loadURL('audio_url', 'audio_element')">Open</button><br>
+
+        Delta: <input id="audio_delta" type="text">
     </form>
 
-    <button onclick="setSync(true)">Lock Sync</button>
-    <button onclick="setSync(false)">Unlock Sync</button>
-    <!--<button onclick="play()">Play</button>-->
-    <!--<button onclick="pause()">Pause</button>-->
-    <!--<button onclick="rewind(60)">Rewind</button>-->
-    <!--<button onclick="forward(60)">Forward</button>-->
+    <button id="sync_toggle" onclick="setSync()">Lock Sync</button>
     <button onclick="logDelta()">Log delta</button>
-    <button onclick="setDelta(-0.5)">Audio forward</button>
-    <button onclick="setDelta(0.5)">Audio backward</button>
+    <button onclick="setDelta(-0.5, null)">Audio forward</button>
+    <button onclick="setDelta(0.5, null)">Audio backward</button>
 
     <footer class="site-footer">
         <span class="site-footer-owner">Developed by Jake Hilborn</span>
@@ -44,7 +41,7 @@
     </footer>
 </section>
 
-<script src="/thync/scripts/asset_loader.js" type="text/javascript"></script>
+<script src="/thync/scripts/data_loader.js" type="text/javascript"></script>
 <script src="/thync/scripts/controls.js" type="text/javascript"></script>
 
 </body>

@@ -3,6 +3,30 @@
 const v_mp4 = "video/mp4";
 const a_mp3 = "audio/mp3";
 
+window.onload = function () { //initialization
+    const query = window.location.search; //example: ?q=abcdefabcdef1004
+    if (query.startsWith("?q=")) {
+        const videoUrl = "http://bit.ly/" + query.substring(3, 10);
+        const audioUrl = "http://bit.ly/" + query.substring(10, 17);
+        const audioDelta = query.substring(17) / 10;
+
+        document.getElementById("video_url").value = videoUrl;
+        document.getElementById("audio_url").value = audioUrl;
+        document.getElementById("audio_delta").value = audioDelta;
+
+        loadURL("video_url", "video_element");
+        loadURL("audio_url", "audio_element");
+
+        if (audioDelta >= 0) {
+            document.getElementById("audio_element").currentTime = audioDelta;
+        } else {
+            document.getElementById("video_element").currentTime = Math.abs(audioDelta);
+        }
+
+        setSync(true);
+    }
+};
+
 function loadURL(sourceElement, targetElement) {
     const isVideo = targetElement.includes("video");
 
@@ -25,7 +49,7 @@ function loadURL(sourceElement, targetElement) {
     const toReplace = document.getElementById(targetElement);
     toReplace.parentNode.replaceChild(media, toReplace);
     media.id = targetElement; //Reuse targetElement id after replacing targetElement
-    initListeners(media);
+    initControls(media);
 }
 
 function inferMime(url, isVideo) {

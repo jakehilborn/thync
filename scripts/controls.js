@@ -1,10 +1,11 @@
 /*jslint browser:true */
 
 let audioDelta = 0; //audio typically a few minutes ahead of movie
+let synced = false;
 let audioElement;
 let videoElement;
 
-function initListeners(media) {
+function initControls(media) {
     if (media.nodeName === "AUDIO") {
         audioElement = media;
     } else if (media.nodeName === "VIDEO") {
@@ -22,10 +23,12 @@ function resync(toVideo) {
     if (toVideo) {
         if (audioDelta > audioElement.currentTime) { //pre-movie chat
             //show something in UI
-        } else if (videoElement.currentTime + audioDelta > audioElement.duration) { //video longer than audio
+        } else if (videoElement.currentTime > audioElement.duration - audioDelta) { //video longer than audio
             setSync(false);
+            audioElement.play(); //onpause from video stops audio, now that were unbound keep playing
         } else if (audioElement.currentTime - audioDelta > videoElement.duration) { //audio longer than video
             setSync(false);
+            videoElement.play();
         } else { //within range of both audio and video
             audioElement.currentTime = videoElement.currentTime + audioDelta;
         }
@@ -49,16 +52,22 @@ function logDelta() {
     console.log((audioDelta - (audioElement.currentTime - videoElement.currentTime)) + " : " + (audioElement.currentTime - videoElement.currentTime));
 }
 
-function setDelta(audioAdjust) {
-    if (audioAdjust) {
-        audioDelta -= audioAdjust;
+function setDelta(audioAdjust, offset) {
+    if (offset) {
+        audioDelta = offset + (audioElement.currentTime - videoElement.currentTime);
     } else {
-        audioDelta = audioElement.currentTime - videoElement.currentTime;
+        audioDelta -= audioAdjust;
     }
 }
 
-function setSync(sync) {
-    if (sync) {
+function setSync(forceSync) {
+    if (forceSync) {
+        synced = false;
+    }
+
+    if (!synced) {
+        synced = true;
+        document.getElementById("sync_toggle").textContent = "Unlock sync";
         audioDelta = audioElement.currentTime - videoElement.currentTime;
         // audioElement.removeAttribute("controls");
 
@@ -93,7 +102,21 @@ function setSync(sync) {
             console.log("audioelement onwaiting");
             videoElement.pause();
         };
+
+        //allow the longer file to keep playing
+        videoElement.onended = function () {
+            if (!audioElement.ended) {
+                audioElement.play();
+            }
+        };
+        audioElement.onended = function () {
+            if (!videoElement.ended) {
+                videoElement.play();
+            }
+        };
     } else {
+        synced = false;
+        document.getElementById("sync_toggle").textContent = "Lock sync";
         audioDelta = 0;
         audioElement.setAttribute("controls", "controls");
         videoElement.onpause = null;
