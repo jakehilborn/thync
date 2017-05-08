@@ -13,6 +13,7 @@ function initControls(media) {
     }
 
     if (audioElement && videoElement) {
+        setSync(false); //new resource loaded. If data_loader initializing it will explicitly call setSync(true)
         watchSync();
     }
 }
@@ -24,11 +25,9 @@ function resync(toVideo) {
         if (audioDelta > audioElement.currentTime) { //pre-movie chat
             //show something in UI
         } else if (videoElement.currentTime > audioElement.duration - audioDelta) { //video longer than audio
-            setSync(false);
-            audioElement.play(); //onpause from video stops audio, now that were unbound keep playing
+
         } else if (audioElement.currentTime - audioDelta > videoElement.duration) { //audio longer than video
-            setSync(false);
-            videoElement.play();
+
         } else { //within range of both audio and video
             audioElement.currentTime = videoElement.currentTime + audioDelta;
         }
@@ -37,6 +36,7 @@ function resync(toVideo) {
     }
 }
 
+//Ensure sync never drifts by more than 0.25 seconds
 function watchSync() {
     if (audioDelta && !audioElement.paused && !videoElement.paused &&
             ((Math.abs(audioElement.currentTime - videoElement.currentTime) > Math.abs(audioDelta) + 0.25) ||
@@ -62,14 +62,14 @@ function setDelta(audioAdjust, offset) {
 
 function setSync(forceSync) {
     if (forceSync) {
-        synced = false;
+        synced = !forceSync;
     }
 
     if (!synced) {
         synced = true;
         document.getElementById("sync_toggle").textContent = "Unlock sync";
         audioDelta = audioElement.currentTime - videoElement.currentTime;
-        // audioElement.removeAttribute("controls");
+        audioElement.removeAttribute("controls");
 
         //synchronize controls to video
         videoElement.onpause = function () {
@@ -114,6 +114,8 @@ function setSync(forceSync) {
                 videoElement.play();
             }
         };
+
+        videoElement.play(); //Sync is usually done with audio playing and video paused. Force play of both.
     } else {
         synced = false;
         document.getElementById("sync_toggle").textContent = "Lock sync";
@@ -126,6 +128,9 @@ function setSync(forceSync) {
         audioElement.oncanplaythrough = null;
         videoElement.onwaiting = null;
         audioElement.onwaiting = null;
+
+        videoElement.pause();
+        audioElement.pause();
     }
 }
 
