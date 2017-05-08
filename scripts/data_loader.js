@@ -12,7 +12,6 @@ window.onload = function () { //initialization
 
         document.getElementById("video_url").value = videoUrl;
         document.getElementById("audio_url").value = audioUrl;
-        document.getElementById("audio_delta").value = audioDelta;
 
         loadURL("video_url", "video_element");
         loadURL("audio_url", "audio_element");
