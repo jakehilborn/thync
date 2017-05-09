@@ -4,6 +4,7 @@ let audioDelta = 0; //audio typically a few minutes ahead of movie
 let synced = false;
 let audioElement;
 let videoElement;
+let loadingMessage = document.getElementById("loading_message");
 
 function initControls(media) {
     if (media.nodeName === "AUDIO") {
@@ -90,18 +91,22 @@ function setSync(forceSync) {
         videoElement.oncanplaythrough = function () {
             console.log("onVideoCanPlay");
             audioElement.play();
+            loadingMessage.textContent = null;
         };
         audioElement.oncanplaythrough = function () {
             console.log("onAudioCanPlay");
             videoElement.play();
+            loadingMessage.textContent = null;
         };
         videoElement.onwaiting = function () {
             console.log("videoelement onwaiting");
             audioElement.pause();
+            loadingMessage.textContent = "Loading video...";
         };
         audioElement.onwaiting = function () {
             console.log("audioelement onwaiting");
             videoElement.pause();
+            loadingMessage.textContent = "Loading audio...";
         };
 
         //allow the longer file to keep playing

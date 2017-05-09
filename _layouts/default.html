@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ site.lang | default: "en-US" }}">
+<html lang="{{ site.lang | default: 'en-US' }}">
 <head>
     <meta charset="UTF-8">
     <title>Thync</title>
@@ -11,7 +11,7 @@
 </head>
 <body>
 <section class="page-header">
-    <h1 class="project-name">Thync</h1>
+    <h1 class="project-name">thync</h1>
     <h2 class="project-tagline">Experimental Jaboody Dubs movie player</h2>
 </section>
 
@@ -20,12 +20,14 @@
     <div id="video_element"></div>
     <div id="audio_element"></div>
 
-    <form>
+    <form style="display:flex">
         Video URL: <input id="video_url" type="text" value="https://redirector.googlevideo.com/videoplayback?id=6419cdb1857fb31d&itag=22&source=webdrive&requiressl=yes&ttl=transient&mm=30&mn=sn-5hne6nls&ms=nxu&mv=u&pl=24&ei=i9wPWdTvNcyTqwWc4qkI&mime=video/mp4&lmt=1464043585870055&mt=1494211653&ip=185.66.141.239&ipbits=0&expire=1494226123&sparams=ip,ipbits,expire,id,itag,source,requiressl,ttl,mm,mn,ms,mv,pl,ei,mime,lmt&signature=5CE8756A2C4F27646DFA8B92165CAE7326AFD143.33AB979466E03CD474F153C5520AEE62030D7A9A&key=ck2&app=explorer">
-        <button type="button" onclick="loadURL('video_url', 'video_element')">Open</button><br>
+        <button type="button" onclick="loadURL('video_url', 'video_element')">Open</button> <p id="loading_message"></p>
+    </form>
 
+    <form style="display:flex">
         Audio URL: <input id="audio_url" type="text" value="https://s3-us-west-1.amazonaws.com/patreon-posts/697869452968638707.mp3">
-        <button type="button" onclick="loadURL('audio_url', 'audio_element')">Open</button><br>
+        <button type="button" onclick="loadURL('audio_url', 'audio_element')">Open</button>
     </form>
 
     <button id="sync_toggle" onclick="setSync()">Lock Sync</button>
