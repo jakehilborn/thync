@@ -17,12 +17,9 @@
 
 <section class="main-content">
 
-    <div id="video_element"></div>
-    <div id="audio_element"></div>
-
     <form style="display:flex">
-        Video URL: <input id="video_url" type="text" value="https://redirector.googlevideo.com/videoplayback?id=6419cdb1857fb31d&itag=22&source=webdrive&requiressl=yes&ttl=transient&mm=30&mn=sn-5hne6nls&ms=nxu&mv=u&pl=24&ei=i9wPWdTvNcyTqwWc4qkI&mime=video/mp4&lmt=1464043585870055&mt=1494211653&ip=185.66.141.239&ipbits=0&expire=1494226123&sparams=ip,ipbits,expire,id,itag,source,requiressl,ttl,mm,mn,ms,mv,pl,ei,mime,lmt&signature=5CE8756A2C4F27646DFA8B92165CAE7326AFD143.33AB979466E03CD474F153C5520AEE62030D7A9A&key=ck2&app=explorer">
-        <button type="button" onclick="loadURL('video_url', 'video_element')">Open</button> <p id="loading_message"></p>
+        Video URL: <input id="video_url" type="text" value="http://s1.mightyload.com/file.php?q=4ab7f36386458d792baebfab65b87375.mp4&md5=7fc76ff163cf16f443616062a51c73fa">
+        <button type="button" onclick="loadURL('video_url', 'video_element')">Open</button>
     </form>
 
     <form style="display:flex">
@@ -30,16 +27,21 @@
         <button type="button" onclick="loadURL('audio_url', 'audio_element')">Open</button>
     </form>
 
+    <div id="video_element"></div>
+    <div id="audio_element"></div>
+
     <button id="sync_toggle" onclick="setSync()">Lock Sync</button>
-    <button onclick="logDelta()">Log delta</button>
-    <button onclick="setDelta(-0.5, null)">Audio forward</button>
-    <button onclick="setDelta(0.5, null)">Audio backward</button>
+    <form style="display:flex">
+        <button type="button" onclick="setDelta(-0.5, null)">-½ sec</button>
+          adjust audio
+        <button type="button" onclick="setDelta(0.5, null)">+½ sec</button>
+    </form>
 
     <p id="share_url"></p>
 
     <footer class="site-footer">
         <span class="site-footer-owner">Developed by Jake Hilborn</span>
-        <span class="site-footer-credits"><a href="https://www.linkedin.com/in/jakehilborn">LinkedIn</a> | <a href="mailto:jakehilborn@gmail.com">Email</a></span>
+        <!--<span class="site-footer-credits"><a href="https://www.linkedin.com/in/jakehilborn">LinkedIn</a> | <a href="mailto:jakehilborn@gmail.com">Email</a></span>-->
     </footer>
 </section>
 

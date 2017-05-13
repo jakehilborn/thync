@@ -46,6 +46,7 @@ function loadURL(sourceElement, targetElement) {
     media.type = type;
     media.controls = "controls";
     media.controlsList = "nodownload";
+    media.preload = "auto";
 
     const toReplace = document.getElementById(targetElement);
     toReplace.parentNode.replaceChild(media, toReplace);
