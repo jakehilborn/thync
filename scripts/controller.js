@@ -4,16 +4,25 @@ let audioDelta = 0; //audio typically a few minutes ahead of movie
 let synced = false;
 let audioElement;
 let videoElement;
+const mediaErrorMessage = document.getElementById("media_error_message");
 
 function initControls(media) {
     if (media.nodeName === "AUDIO") {
         audioElement = media;
+        audioElement.onerror = function () {
+            onMediaError(audioElement);
+        };
     } else if (media.nodeName === "VIDEO") {
         videoElement = media;
         videoElement.onwaiting = function () { // hack to show loading gif when buffering, but not when first loading
-            videoElement.poster = "/assets/loading.gif";
+            videoElement.poster = "/thync/assets/loading.gif";
+        };
+        videoElement.onerror = function () {
+            onMediaError(videoElement);
         };
     }
+
+    mediaErrorMessage.textContent = null;
 
     if (audioElement && videoElement) {
         setSync(false); //new resource loaded. If data_loader initializing it will explicitly call setSync(true)
@@ -101,7 +110,7 @@ function setSync(forceSync) {
         videoElement.onwaiting = function () {
             console.log("videoelement onwaiting");
             audioElement.pause();
-            videoElement.poster = "/assets/loading.gif";
+            videoElement.poster = "/thync/assets/loading.gif";
         };
         audioElement.onwaiting = function () {
             console.log("audioelement onwaiting");
@@ -120,7 +129,7 @@ function setSync(forceSync) {
             }
         };
 
-        videoElement.play(); //Sync is usually done with audio playing and video paused. Force play of both.
+        videoElement.play(); //Sync is usually clicked with audio playing and video paused. Force play of both.
         buildSharingURL();
     } else {
         synced = false;
@@ -147,6 +156,16 @@ function buildSharingURL(remove = false) {
         const shareUrl = "https://jakehilborn.github.io/thync/?q=" + videoHash + audioHash + Math.round(audioDelta * 10);
         document.getElementById("share_url").textContent = "Share this dub: " + shareUrl;
     }
+}
+
+function onMediaError(mediaRef) {
+    const mediaPlaceholder = document.createElement("DIV");
+    mediaRef.parentNode.replaceChild(mediaPlaceholder, mediaRef);
+    mediaPlaceholder.id = mediaRef.id; //Reuse targetElement id after replacing targetElement
+
+    const messageContent = "Failed to load " + (mediaRef.id.includes("video") ? "video" : "audio");
+    mediaErrorMessage.textContent = messageContent;
+    alert(messageContent);
 }
 
 // // 2. This code loads the IFrame Player API code asynchronously.

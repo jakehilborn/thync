@@ -19,13 +19,15 @@
 
     <form style="display:flex">
         Video URL: <input id="video_url" type="text" value="http://s1.mightyload.com/file.php?q=4ab7f36386458d792baebfab65b87375.mp4&md5=7fc76ff163cf16f443616062a51c73fa">
-        <button type="button" onclick="loadURL('video_url', 'video_element')">Open</button>
+        <button type="button" onclick="loadMedia('video_url', 'video_element')">Open</button>
     </form>
 
     <form style="display:flex">
         Audio URL: <input id="audio_url" type="text" value="https://s3-us-west-1.amazonaws.com/patreon-posts/697869452968638707.mp3">
-        <button type="button" onclick="loadURL('audio_url', 'audio_element')">Open</button>
+        <button type="button" onclick="loadMedia('audio_url', 'audio_element')">Open</button>
     </form>
+
+    <p id="media_error_message"></p>
 
     <div id="video_element"></div>
     <div id="audio_element"></div>
@@ -46,7 +48,7 @@
 </section>
 
 <script src="/thync/scripts/data_loader.js" type="text/javascript"></script>
-<script src="/thync/scripts/controls.js" type="text/javascript"></script>
+<script src="/thync/scripts/controller.js" type="text/javascript"></script>
 
 </body>
 </html>

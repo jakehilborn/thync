@@ -15,8 +15,8 @@ window.onload = function () { //initialization
         document.getElementById("video_url").value = videoUrl;
         document.getElementById("audio_url").value = audioUrl;
 
-        loadURL("video_url", "video_element");
-        loadURL("audio_url", "audio_element");
+        loadMedia("video_url", "video_element");
+        loadMedia("audio_url", "audio_element");
 
         if (audioDelta >= 0) {
             document.getElementById("audio_element").currentTime = audioDelta;
@@ -28,7 +28,7 @@ window.onload = function () { //initialization
     }
 };
 
-function loadURL(sourceElement, targetElement) {
+function loadMedia(sourceElement, targetElement) {
     const isVideo = targetElement.includes("video");
 
     const url = document.getElementById(sourceElement).value;
