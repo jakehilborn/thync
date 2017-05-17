@@ -1,9 +1,17 @@
 /*jslint browser:true */
 
+const videoSourceElement = "video_url";
+const audioSourceElement = "audio_url";
+const videoTargetElement = "video_element";
+const audioTargetElement = "audio_element";
+const youtube = "youtube";
 const v_mp4 = "video/mp4";
 const a_mp3 = "audio/mp3";
-let audioHash;
+// let youtubeAPIInitialized;
+// let youtubePendingVideo;
+// let youtubePendingAudio;
 let videoHash;
+let audioHash;
 
 window.onload = function () { //initialization
     const query = window.location.search; //example: ?q=abcdefabcdef1004
@@ -12,27 +20,41 @@ window.onload = function () { //initialization
         const audioUrl = "http://bit.ly/" + query.substring(10, 17);
         const audioDelta = query.substring(17) / 10;
 
-        document.getElementById("video_url").value = videoUrl;
-        document.getElementById("audio_url").value = audioUrl;
+        document.getElementById(videoSourceElement).value = videoUrl;
+        document.getElementById(audioSourceElement).value = audioUrl;
 
-        loadMedia("video_url", "video_element");
-        loadMedia("audio_url", "audio_element");
+        loadMedia(videoSourceElement);
+        loadMedia(audioSourceElement);
 
         if (audioDelta >= 0) {
-            document.getElementById("audio_element").currentTime = audioDelta;
+            document.getElementById(audioTargetElement).currentTime = audioDelta;
         } else {
-            document.getElementById("video_element").currentTime = Math.abs(audioDelta);
+            document.getElementById(videoTargetElement).currentTime = Math.abs(audioDelta);
         }
 
         setSync(true);
     }
 };
 
-function loadMedia(sourceElement, targetElement) {
-    const isVideo = targetElement.includes("video");
-
-    const url = document.getElementById(sourceElement).value;
+function loadMedia(sourceElement, overrideURL) {
+    const isVideo = sourceElement.includes("video");
+    const url = overrideURL || document.getElementById(sourceElement).value;
     const type = inferMime(url, isVideo);
+
+    // if (type === youtube && !youtubeAPIInitialized) {
+    //     if (isVideo) {
+    //         youtubePendingVideo = url;
+    //     } else {
+    //         youtubePendingAudio = url;
+    //     }
+    //     initYouTube();
+    //     return;
+    // }
+
+    if (type === youtube) {
+        getDirectYTLink(url, sourceElement);
+        return;
+    }
 
     let media;
     if (isVideo) {
@@ -48,17 +70,52 @@ function loadMedia(sourceElement, targetElement) {
     media.controlsList = "nodownload";
     media.preload = "auto";
 
-    const toReplace = document.getElementById(targetElement);
+    const toReplace = document.getElementById(isVideo ? videoTargetElement : audioTargetElement);
     toReplace.parentNode.replaceChild(media, toReplace);
-    media.id = targetElement; //Reuse targetElement id after replacing targetElement
+    media.id = (isVideo ? videoTargetElement : audioTargetElement); //Reuse targetElement id after replacing targetElement
     initControls(media);
 
     shortenURL(url, isVideo);
 }
 
+// function initYouTube() {
+//     //Loads the IFrame Player API code asynchronously
+//     const tag = document.createElement("script");
+//     tag.src = "https://www.youtube.com/iframe_api";
+//     const firstScriptTag = document.getElementsByTagName("script")[0];
+//     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+// }
+//
+// function onYouTubeIframeAPIReady() {
+//     youtubeAPIInitialized = true;
+//     if (youtubePendingVideo) {
+//         loadMedia(videoSourceElement, youtubePendingVideo);
+//         youtubePendingVideo = null;
+//     }
+//
+//     if (youtubePendingAudio) {
+//         loadMedia(audioSourceElement, youtubePendingAudio);
+//         youtubePendingAudio = null;
+//     }
+// }
+//
+// function onPlayerReady(event) {
+//     event.target.playVideo();
+// }
+
+// new YT.Player('video_element', {
+//     height: '390',
+//     width: '640',
+//     videoId: 'M7lc1UVf-VE',
+//     events: {
+//         'onReady': onPlayerReady
+//     }
+// });
+
 function inferMime(url, isVideo) {
-    if (url.includes("://youtube.com") || url.includes("www.youtube.com") || url.startsWith("youtube.com")) {
-        //youtube
+    if (url.includes("://youtube.com") || url.includes("www.youtube.com") || url.startsWith("youtube.com") ||
+            url.includes("://youtu.be") || url.includes("www.youtu.be") || url.startsWith("youtu.be")) {
+        return youtube;
     } else if (url.includes(".mp4")) {
         return v_mp4;
     } else if (url.includes(".webm")) {
@@ -80,6 +137,22 @@ function inferMime(url, isVideo) {
     } else if (url.includes("ogg")) {
 
     }
+}
+
+function getDirectYTLink(url, sourceElement) {
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status >= 200 && request.status < 300) {
+                const response = JSON.parse(request.responseText);
+                loadMedia(sourceElement, response.url);
+            } else {
+                alert("Failed to load YouTube url");
+            }
+        }
+    };
+    request.open("GET", "https://uploadbeta.com/api/video/?cached&video=" + url);
+    request.send();
 }
 
 function shortenURL(url, isVideo) {
