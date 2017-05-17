@@ -163,8 +163,11 @@ function onMediaError(mediaRef) {
     mediaRef.parentNode.replaceChild(mediaPlaceholder, mediaRef);
     mediaPlaceholder.id = mediaRef.id; //Reuse targetElement id after replacing targetElement
 
-    const messageContent = "Failed to load " + (mediaRef.id.includes("video") ? "video" : "audio");
+    const messageContent = "Unable to load " + (mediaRef.id.includes("video") ? "video" : "audio") + ". The link may have expired. Please try a different source.";
     mediaErrorMessage.textContent = messageContent;
+
+    setSync(false);
+
     alert(messageContent);
 }
 
