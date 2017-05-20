@@ -152,8 +152,8 @@ function setSync(forceSync) {
 function buildSharingURL(remove = false) {
     if (remove) {
         document.getElementById("share_url").textContent = null;
-    } else if (videoHash && audioHash) {
-        const shareUrl = "https://jakehilborn.github.io/thync/?q=" + videoHash + audioHash + Math.round(audioDelta * 10);
+    } else if (videoID && audioID) {
+        const shareUrl = "https://jakehilborn.github.io/thync/?q=" + formatVersion + videoID + audioID + Math.round(audioDelta * 10);
         document.getElementById("share_url").textContent = "Share this dub: " + shareUrl;
     }
 }

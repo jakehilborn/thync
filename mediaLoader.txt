@@ -1,0 +1,198 @@
+diff --git a/scripts/controller.js b/scripts/controller.js
+index 34601aa..78f59e3 100644
+--- a/scripts/controller.js
++++ b/scripts/controller.js
+@@ -152,8 +152,8 @@ function setSync(forceSync) {
+ function buildSharingURL(remove = false) {
+     if (remove) {
+         document.getElementById("share_url").textContent = null;
+-    } else if (videoHash && audioHash) {
+-        const shareUrl = "https://jakehilborn.github.io/thync/?q=" + videoHash + audioHash + Math.round(audioDelta * 10);
++    } else if (videoID && audioID) {
++        const shareUrl = "https://jakehilborn.github.io/thync/?q=" + formatVersion + videoID + audioID + Math.round(audioDelta * 10);
+         document.getElementById("share_url").textContent = "Share this dub: " + shareUrl;
+     }
+ }
+diff --git a/scripts/data_loader.js b/scripts/data_loader.js
+index 6267528..8d8085c 100644
+--- a/scripts/data_loader.js
++++ b/scripts/data_loader.js
+@@ -4,58 +4,93 @@ const videoSourceElement = "video_url";
+ const audioSourceElement = "audio_url";
+ const videoTargetElement = "video_element";
+ const audioTargetElement = "audio_element";
+-const youtube = "youtube";
+-const v_mp4 = "video/mp4";
+-const a_mp3 = "audio/mp3";
+ // let youtubeAPIInitialized;
+ // let youtubePendingVideo;
+ // let youtubePendingAudio;
+-let videoHash;
+-let audioHash;
++let videoID;
++let audioID;
++
++const youtube = "youtube";
++const v_mp4 = "video/mp4";
++const a_mp3 = "audio/mp3";
++const mediaMap = [
++    {code: "0", type: youtube},
++    {code: "1", type: v_mp4},
++    {code: "2", type: a_mp4}
++];
+ 
+ window.onload = function () { //initialization
+-    const query = window.location.search; //example: ?q=abcdefabcdef1004
++    const queryString = window.location.search;
+     if (query.startsWith("?q=")) {
+-        const videoUrl = "http://bit.ly/" + query.substring(3, 10);
+-        const audioUrl = "http://bit.ly/" + query.substring(10, 17);
+-        const audioDelta = query.substring(17) / 10;
++        const args = parseQueryString(queryString);
+ 
+-        document.getElementById(videoSourceElement).value = videoUrl;
+-        document.getElementById(audioSourceElement).value = audioUrl;
++        document.getElementById(videoSourceElement).value = args.videoUrl;
++        document.getElementById(audioSourceElement).value = args.audioUrl;
+ 
+-        loadMedia(videoSourceElement);
+-        loadMedia(audioSourceElement);
++        loadMedia(videoSourceElement, args.videoUrl, args.videoType);
++        loadMedia(audioSourceElement, args.audioUrl, args.audioType);
+ 
+-        if (audioDelta >= 0) {
+-            document.getElementById(audioTargetElement).currentTime = audioDelta;
++        if (args.audioDelta >= 0) {
++            document.getElementById(audioTargetElement).currentTime = args.audioDelta;
+         } else {
+-            document.getElementById(videoTargetElement).currentTime = Math.abs(audioDelta);
++            document.getElementById(videoTargetElement).currentTime = Math.abs(args.audioDelta);
+         }
+ 
+         setSync(true);
+     }
+ };
+ 
+-function loadMedia(sourceElement, overrideURL) {
++//example: ?q=00abcdefg2hijklmn1004
++//0: queryString formatVersion
++//0: media type
++//abcdefg: video bitly hash
++//2: media type
++//hijklmn: audio bitly hash
++//1004: audio delta in seconds*10
++function parseQueryString(queryString) {
++    const args = {};
++    if (queryString.charAt(3) === "0") {
++        args.videoType = mediaCodeToType(queryString.charAt(4));
++        args.videoUrl = "http://bit.ly/" + queryString.substring(5, 12);
++        args.audioType = mediaCodeToType(queryString.charAt(12));
++        args.audioUrl = "http://bit.ly/" + queryString.substring(13, 20);
++        args.audioDelta = queryString.substring(20) / 10;
++    }
++
++    return args;
++}
++
++function mediaCodeToType(code) {
++    for (let i = 0; i < mediaMap.length; i++) {
++        if (code === mediaMap[i].code) {
++            return mediaMap[i].type;
++        }
++    }
++}
++
++function mediaTypeToCode(type) {
++    for (let i = 0; i < mediaMap.length; i++) {
++        if (type === mediaMap[i].type) {
++            return mediaMap[i].code;
++        }
++    }
++}
++
++function loadMedia(sourceElement, overrideURL, overrideType) {
+     const isVideo = sourceElement.includes("video");
+     const url = overrideURL || document.getElementById(sourceElement).value;
+-    const type = inferMime(url, isVideo);
+-
+-    // if (type === youtube && !youtubeAPIInitialized) {
+-    //     if (isVideo) {
+-    //         youtubePendingVideo = url;
+-    //     } else {
+-    //         youtubePendingAudio = url;
+-    //     }
+-    //     initYouTube();
+-    //     return;
+-    // }
++    const type = overrideType || inferMime(url, isVideo);
+ 
+     if (type === youtube) {
+-        getDirectYTLink(url, sourceElement);
+-        return;
++        getDirectYTLink(isVideo, url); //This will call putMediaInDOM after resolving youtube -> mp4
++    } else {
++        putMediaInDOM(isVideo, url, type);
+     }
+ 
++    buildMediaID(isVideo, url, isVideo);
++}
++
++function putMediaInDOM(isVideo, url, type) {
+     let media;
+     if (isVideo) {
+         media = document.createElement("VIDEO");
+@@ -74,8 +109,6 @@ function loadMedia(sourceElement, overrideURL) {
+     toReplace.parentNode.replaceChild(media, toReplace);
+     media.id = (isVideo ? videoTargetElement : audioTargetElement); //Reuse targetElement id after replacing targetElement
+     initControls(media);
+-
+-    shortenURL(url, isVideo);
+ }
+ 
+ // function initYouTube() {
+@@ -139,13 +172,13 @@ function inferMime(url, isVideo) {
+     }
+ }
+ 
+-function getDirectYTLink(url, sourceElement) {
++function getDirectYTLink(isVideo, url) {
+     const request = new XMLHttpRequest();
+     request.onreadystatechange = function () {
+         if (request.readyState === 4) {
+             if (request.status >= 200 && request.status < 300) {
+                 const response = JSON.parse(request.responseText);
+-                loadMedia(sourceElement, response.url);
++                putMediaInDOM(isVideo, response.url);
+             } else {
+                 alert("Failed to load YouTube url");
+             }
+@@ -155,12 +188,14 @@ function getDirectYTLink(url, sourceElement) {
+     request.send();
+ }
+ 
+-function shortenURL(url, isVideo) {
++function buildMediaID(isVideo, url, type) {
++    const mediaCode = mediaTypeToCode(type);
++
+     if (url.includes("bit.ly")) {
+         if (isVideo) {
+-            videoHash = url.substring(url.length - 7);
++            videoID = url.substring(url.length - 7);
+         } else {
+-            audioHash = url.substring(url.length - 7);
++            audioID = url.substring(url.length - 7);
+         }
+         return;
+     }
+@@ -170,9 +205,9 @@ function shortenURL(url, isVideo) {
+         if (request.readyState === 4 && request.status === 200) {
+             const response = JSON.parse(request.responseText);
+             if (isVideo) {
+-                videoHash = response.data.hash;
++                videoID = mediaCode + response.data.hash;
+             } else {
+-                audioHash = response.data.hash;
++                audioID = mediaCode + response.data.hash;
+             }
+         }
+     };
