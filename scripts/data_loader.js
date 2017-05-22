@@ -16,12 +16,12 @@ const a_mp3 = "audio/mp3";
 const mediaMap = [
     {code: "0", type: youtube},
     {code: "1", type: v_mp4},
-    {code: "2", type: a_mp4}
+    {code: "2", type: a_mp3}
 ];
 
 window.onload = function () { //initialization
     const queryString = window.location.search;
-    if (query.startsWith("?q=")) {
+    if (queryString.startsWith("?q=")) {
         const args = parseQueryString(queryString);
 
         document.getElementById(videoSourceElement).value = args.videoUrl;

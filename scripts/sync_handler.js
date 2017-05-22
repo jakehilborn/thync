@@ -1,9 +1,11 @@
 /*jslint browser:true */
 
-function syncPause(video, audio) {
-    if (video.nodeName === "VIDEO") { //HTML5
+//YouTube media is contained in IFRAMES, else media is an HTML5 element
 
-    } else { //YouTube
+function syncPause(video, audio) {
+    if (video.nodeName === "IFRAME") { //youtube
+
+    } else { //HTML5
 
     }
 }
