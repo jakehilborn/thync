@@ -78,7 +78,7 @@ function mediaTypeToCode(type) {
 
 function loadMedia(sourceElement, overrideURL, overrideType) {
     const isVideo = sourceElement.includes("video");
-    const url = overrideURL || document.getElementById(sourceElement).value;
+    const url = extractVideoFiles(overrideURL || document.getElementById(sourceElement).value)[0];
     const type = overrideType || inferMime(url, isVideo);
 
     if (type === youtube && !youtubeAPIInitialized) {
@@ -212,6 +212,35 @@ function youTubeGetID(url){
 //     request.open("GET", "https://uploadbeta.com/api/video/?cached&video=" + url);
 //     request.send();
 // }
+
+function extractVideoFiles(s) {
+    const matches = new Set(); //using a set to only keep unique URLs
+
+    const len = s.length;
+    for (let i = 0; i < len; i++) {
+        if (s[i] === "m" && s[i + 1] === "p" && s[i + 2] === "4") {
+            let beg = i;
+            let end = i + 2;
+            while (beg >= 0 && s[beg] !== "\"") {
+                beg--;
+            }
+
+            //if beg less than 4 this is the case where the user entered the mp4 url directly instead of an HTML page
+            if (beg >= 4 && s.substring(beg - 4, beg) !== "src=") {
+                continue; //this mp4 is not in the src tag, often we find mp4 in the type tag.
+            }
+
+            while (end < len && s[end] !== "\"") {
+                end++;
+            }
+
+            //HTML decode the mp4 match. Some sites HTML encode strings multiple times, so decode 3 times.
+            matches.add(he.decode(he.decode(he.decode(s.substring(beg + 1, end)))));
+        }
+    }
+
+    return Array.from(matches);
+}
 
 function buildMediaID(isVideo, url, type) {
     const mediaCode = mediaTypeToCode(type);
