@@ -78,21 +78,29 @@ function mediaTypeToCode(type) {
 
 function loadMedia(sourceElement, overrideURL, overrideType) {
     const isVideo = sourceElement.includes("video");
-    const url = extractVideoFiles(overrideURL || document.getElementById(sourceElement).value)[0];
-    const type = overrideType || inferMime(url, isVideo);
+
+    let mediaSource = overrideURL || document.getElementById(sourceElement).value;
+    if (isVideo) {
+        const urls = extractVideoFiles(mediaSource);
+        // if (urls.length > 1) {
+            getVideoSizes(urls);
+        // }
+        mediaSource = urls[0];
+    }
+    const type = overrideType || inferMime(mediaSource, isVideo);
 
     if (type === youtube && !youtubeAPIInitialized) {
         if (isVideo) {
-            youtubePendingVideo = url;
+            youtubePendingVideo = mediaSource;
         } else {
-            youtubePendingAudio = url;
+            youtubePendingAudio = mediaSource;
         }
         initYouTube(); //will call putMediaInDOM after YouTube API has loaded
     } else {
-        putMediaInDOM(isVideo, url, type);
+        putMediaInDOM(isVideo, mediaSource, type);
     }
 
-    buildMediaID(isVideo, url, isVideo);
+    buildMediaID(isVideo, mediaSource, isVideo);
 }
 
 function putMediaInDOM(isVideo, url, type) {
@@ -242,14 +250,32 @@ function extractVideoFiles(s) {
     return Array.from(matches);
 }
 
+function getVideoSizes(urls) {
+    for (let i = 0; i < urls.length; i++) {
+        const request = new XMLHttpRequest();
+        request.onreadystatechange = function () {
+            if (request.readyState === 4 && request.status === 200) {
+                const megabytes = request.getResponseHeader("Content-Length") / 1024 / 1024;
+                console.log("success, megs: " + megabytes);
+                addVidSourceOption(urls[i], megabytes, i + 1);
+            } else {
+                //some servers don't allow CORS so we can't get the video size info
+                addVidSourceOption(urls[i], null, i + 1);
+            }
+        };
+        request.open("HEAD", urls[i]);
+        request.send();
+    }
+}
+
 function buildMediaID(isVideo, url, type) {
     const mediaCode = mediaTypeToCode(type);
 
     if (url.includes("bit.ly")) {
         if (isVideo) {
-            videoID = url.substring(url.length - 7);
+            videoID = mediaCode + url.substring(url.length - 7);
         } else {
-            audioID = url.substring(url.length - 7);
+            audioID = mediaCode + url.substring(url.length - 7);
         }
         return;
     }

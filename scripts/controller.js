@@ -170,3 +170,17 @@ function onMediaError(mediaRef) {
 
     alert(messageContent);
 }
+
+function addVidSourceOption(url, megabytes, number) {
+    const sizeMessage = megabytes === null ? "" : megabytes + " MB";
+
+    const input = document.createElement("a"); //create hyperlink
+    input.textContent = "video version " + number + ". " + sizeMessage;
+    input.onclick = function () {
+        loadMedia("video_url", url);
+    };
+
+    input.appendChild(document.createElement("br"));
+    const video_quality = document.getElementById("video_quality");
+    video_quality.parentNode.insertBefore(input, video_quality);
+}
