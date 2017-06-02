@@ -4,9 +4,6 @@ const videoSourceElement = "video_url";
 const audioSourceElement = "audio_url";
 const videoTargetElement = "video_element";
 const audioTargetElement = "audio_element";
-let youtubeAPIInitialized = false;
-let youtubePendingVideo;
-let youtubePendingAudio;
 let videoID;
 let audioID;
 
@@ -82,43 +79,29 @@ function loadMedia(sourceElement, overrideURL, overrideType) {
     let mediaSource = overrideURL || document.getElementById(sourceElement).value;
     if (isVideo) {
         const urls = extractVideoFiles(mediaSource);
-        // if (urls.length > 1) {
+        if (urls.length > 1) {
             getVideoSizes(urls);
-        // }
-        mediaSource = urls[0];
+            mediaSource = urls[0];
+        }
     }
     const type = overrideType || inferMime(mediaSource, isVideo);
 
-    if (type === youtube && !youtubeAPIInitialized) {
-        if (isVideo) {
-            youtubePendingVideo = mediaSource;
-        } else {
-            youtubePendingAudio = mediaSource;
-        }
-        initYouTube(); //will call putMediaInDOM after YouTube API has loaded
-    } else {
-        putMediaInDOM(isVideo, mediaSource, type);
+    if (type === youtube) {
+        mediaSource = getDirectYTLink(isVideo, mediaSource, 0);
     }
 
-    buildMediaID(isVideo, mediaSource, isVideo);
+    if (document.getElementById(sourceElement).value.length > 5000) {
+        //If user copies in whole web page the textbox will be unresponsive, now that we have the data remove the text.
+        document.getElementById(sourceElement).value = "";
+    }
+
+    putMediaInDOM(isVideo, mediaSource, type);
+    buildMediaID(isVideo, mediaSource, type);
 }
 
 function putMediaInDOM(isVideo, url, type) {
     let media;
     const targetElement = isVideo ? videoTargetElement : audioTargetElement;
-    if (type === youtube) {
-        const videoId = youTubeGetID(url);
-
-        new YT.Player(targetElement, {
-            height: "390",
-            width: "640",
-            videoId: videoId,
-            events: {
-                "onReady": onPlayerReady
-            }
-        });
-        return
-    }
 
     if (isVideo) {
         media = document.createElement("VIDEO");
@@ -137,31 +120,6 @@ function putMediaInDOM(isVideo, url, type) {
     toReplace.parentNode.replaceChild(media, toReplace);
     media.id = (targetElement); //Reuse targetElement id after replacing targetElement
     initControls(media);
-}
-
-function initYouTube() {
-    //Loads the IFrame Player API code asynchronously
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-}
-
-function onYouTubeIframeAPIReady() {
-    youtubeAPIInitialized = true;
-    if (youtubePendingVideo) {
-        putMediaInDOM(true, youtubePendingVideo, youtube);
-        youtubePendingVideo = null;
-    }
-
-    if (youtubePendingAudio) {
-        putMediaInDOM(false, youtubePendingVideo, youtube);
-        youtubePendingAudio = null;
-    }
-}
-
-function onPlayerReady(event) {
-    event.target.playVideo();
 }
 
 function inferMime(url, isVideo) {
@@ -191,35 +149,47 @@ function inferMime(url, isVideo) {
     }
 }
 
-// Source: https://gist.github.com/takien/4077195
-function youTubeGetID(url){
-    let ID = "";
-    url = url.replace(/(>|<)/gi,"").split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
-    if(url[2] !== undefined) {
-        ID = url[2].split(/[^0-9a-z_\-]/i);
-        ID = ID[0];
-    }
-    else {
-        ID = url;
-    }
-    return ID;
+function getDirectYTLink(isVideo, url, tryCount) {
+    const baseURLs = [
+        "helloacm.com",
+        "steakovercooked.com",
+        "uploadbeta.com",
+        "happyukgo.com"
+    ];
+
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status >= 200 && request.status < 300) {
+                const response = JSON.parse(request.responseText);
+                let media = response.url;
+
+                if (response.urls) { //video and audio are separate files
+                    media = isVideo ? response.urls[0] : response.urls[1];
+                } //TODO - load both files and sync these up as well
+
+                putMediaInDOM(isVideo, media);
+            } else {
+                if (tryCount === 3) {
+                    alert("Failed to load YouTube url");
+                } else {
+                    getDirectYTLink(isVideo, url, tryCount + 1);
+                }
+            }
+        }
+    };
+
+    let script = document.createElement("script");
+    script.src = "https://steakovercooked.com/api/video/?lang=en&video=https://www.youtube.com/watch?v=TSU2ZqACwAU&q=ytLinkCallback";
+    document.body.appendChild(script);
+
+    // request.open("GET", "https://steakovercooked.com/api/video/?lang=en&video=https://www.youtube.com/watch?v=TSU2ZqACwAU");
+    // request.send();
 }
 
-// function getDirectYTLink(isVideo, url) {
-//     const request = new XMLHttpRequest();
-//     request.onreadystatechange = function () {
-//         if (request.readyState === 4) {
-//             if (request.status >= 200 && request.status < 300) {
-//                 const response = JSON.parse(request.responseText);
-//                 putMediaInDOM(isVideo, response.url);
-//             } else {
-//                 alert("Failed to load YouTube url");
-//             }
-//         }
-//     };
-//     request.open("GET", "https://uploadbeta.com/api/video/?cached&video=" + url);
-//     request.send();
-// }
+function ytLinkCallback(data) {
+    console.log("data: " + data);
+}
 
 function extractVideoFiles(s) {
     const matches = new Set(); //using a set to only keep unique URLs
@@ -251,16 +221,18 @@ function extractVideoFiles(s) {
 }
 
 function getVideoSizes(urls) {
+    let videoVersion = 1;
+
     for (let i = 0; i < urls.length; i++) {
         const request = new XMLHttpRequest();
         request.onreadystatechange = function () {
-            if (request.readyState === 4 && request.status === 200) {
-                const megabytes = request.getResponseHeader("Content-Length") / 1024 / 1024;
-                console.log("success, megs: " + megabytes);
-                addVidSourceOption(urls[i], megabytes, i + 1);
-            } else {
-                //some servers don't allow CORS so we can't get the video size info
-                addVidSourceOption(urls[i], null, i + 1);
+            if (request.readyState === 4) {
+                let megabytes = null;
+                if (request.status === 200) { //if server doesn't allow CORS, leave megabytes as null
+                    megabytes = Math.floor(request.getResponseHeader("Content-Length") / 1024 / 1024);
+                }
+                addVidSourceOption(urls[i], megabytes, videoVersion);
+                videoVersion++;
             }
         };
         request.open("HEAD", urls[i]);

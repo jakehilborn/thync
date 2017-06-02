@@ -172,10 +172,10 @@ function onMediaError(mediaRef) {
 }
 
 function addVidSourceOption(url, megabytes, number) {
-    const sizeMessage = megabytes === null ? "" : megabytes + " MB";
+    const sizeMessage = megabytes === null ? "" : " - " + megabytes + " MB";
 
     const input = document.createElement("a"); //create hyperlink
-    input.textContent = "video version " + number + ". " + sizeMessage;
+    input.textContent = "video version " + number + sizeMessage;
     input.onclick = function () {
         loadMedia("video_url", url);
     };
