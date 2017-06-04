@@ -88,6 +88,7 @@ function loadMedia(sourceElement, overrideURL, overrideType) {
 
     if (type === youtube) {
         mediaSource = getDirectYTLink(isVideo, mediaSource, 0);
+        return;
     }
 
     if (document.getElementById(sourceElement).value.length > 5000) {
@@ -157,39 +158,51 @@ function getDirectYTLink(isVideo, url, tryCount) {
         "happyukgo.com"
     ];
 
-    const request = new XMLHttpRequest();
-    request.onreadystatechange = function () {
-        if (request.readyState === 4) {
-            if (request.status >= 200 && request.status < 300) {
-                const response = JSON.parse(request.responseText);
-                let media = response.url;
+    console.log("try: " + tryCount);
 
-                if (response.urls) { //video and audio are separate files
-                    media = isVideo ? response.urls[0] : response.urls[1];
-                } //TODO - load both files and sync these up as well
-
-                putMediaInDOM(isVideo, media);
-            } else {
-                if (tryCount === 3) {
-                    alert("Failed to load YouTube url");
-                } else {
-                    getDirectYTLink(isVideo, url, tryCount + 1);
-                }
+    fetchJSONP("http://anyorigin.com/go?url=" + encodeURIComponent("https://" + baseURLs[tryCount] + "/api/video/?lang=en&video=" + url)).then((response) => {
+        return response.json();
+    }).then((data) => {
+        const body = data.contents;
+        if (!body.url && !body.urls) { // no mp4 in response, try the next server
+            if (tryCount < 3) {
+                getDirectYTLink(isVideo, url, tryCount + 1);
             }
+            return;
         }
-    };
 
-    let script = document.createElement("script");
-    script.src = "https://steakovercooked.com/api/video/?lang=en&video=https://www.youtube.com/watch?v=TSU2ZqACwAU&q=ytLinkCallback";
-    document.body.appendChild(script);
+        let media = body.url;
+        if (body.urls) { //video and audio are separate files
+            media = isVideo ? body.urls[0] : body.urls[1];
+        } //TODO - load both files and sync these up as well
 
-    // request.open("GET", "https://steakovercooked.com/api/video/?lang=en&video=https://www.youtube.com/watch?v=TSU2ZqACwAU");
-    // request.send();
+        console.log("media: " + media);
+        putMediaInDOM(isVideo, media);
+    });
 }
 
-function ytLinkCallback(data) {
-    console.log("data: " + data);
-}
+//Source: https://gist.github.com/gf3/132080/110d1b68d7328d7bfe7e36617f7df85679a08968
+const fetchJSONP = (unique => url =>
+    new Promise(rs => {
+        const script = document.createElement("script");
+        const name = `_jsonp_${unique++}`;
+
+        if (url.match(/\?/)) {
+            url += `&callback=${name}`;
+        } else {
+            url += `?callback=${name}`;
+        }
+
+        script.src = url;
+        window[name] = json => {
+            rs(new Response(JSON.stringify(json)));
+            script.remove();
+            delete window[name];
+        };
+
+        document.body.appendChild(script);
+    })
+)(0);
 
 function extractVideoFiles(s) {
     const matches = new Set(); //using a set to only keep unique URLs
